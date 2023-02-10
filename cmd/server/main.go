@@ -1,44 +1,32 @@
 package main
 
 import (
-	"fmt"
-	"io/ioutil"
+	"context"
+	"github.com/Carbohz/gtfs-viewer/api/rest/downloader"
+	_ "github.com/Carbohz/gtfs-viewer/service/server/v1"
 	"log"
-	"net/http"
-
-	"github.com/MobilityData/gtfs-realtime-bindings/golang/gtfs"
-	"google.golang.org/protobuf/proto"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
-	var (
-		username = "YOUR_ACCESS_KEY"
-		password = "YOUR_SECRET_KEY"
+	ctx, ctxCancel := signal.NotifyContext(
+		context.Background(),
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT,
 	)
+	defer ctxCancel()
 
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", "URL OF YOUR GTFS-REALTIME SOURCE GOES HERE", nil)
-	req.SetBasicAuth(username, password)
-	resp, err := client.Do(req)
-	defer resp.Body.Close()
+	// service := v1.NewService()
+
+	apiServer, err := downloader.NewAPIServer()
 	if err != nil {
-		log.Fatal(err)
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to create a server: %v", err)
 	}
 
-	feed := gtfs.FeedMessage{}
-	err = proto.Unmarshal(body, &feed)
+	err = apiServer.Run(ctx)
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	for _, entity := range feed.Entity {
-		tripUpdate := entity.GetTripUpdate()
-		trip := tripUpdate.GetTrip()
-		tripId := trip.GetTripId()
-		fmt.Printf("Trip ID: %s\n", tripId)
+		return
 	}
 }
