@@ -1,8 +1,11 @@
 package handlers
 
 import (
+	"archive/zip"
+	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -24,6 +27,28 @@ func WebArchiveDownloadHandler() http.HandlerFunc {
 		}
 		log.Println("status", resp.Status)
 
+		body, err := ioutil.ReadAll(resp.Body)
+		//log.Println(string(body))
+		zipReader, err := zip.NewReader(bytes.NewReader(body), int64(len(body)))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Read all the files from zip archive
+		for _, zipFile := range zipReader.File {
+			if zipFile.Name == "routes.txt" {
+				log.Println("Reading file:", zipFile.Name)
+				unzippedFileBytes, err := readZipFile(zipFile)
+				if err != nil {
+					log.Println(err)
+					continue
+				}
+
+				_ = unzippedFileBytes // this is unzipped file bytes
+				log.Println(string(unzippedFileBytes))
+			}
+		}
+
 		// Create the file
 		out, err := os.Create("gtfs_limassol.zip")
 		if err != nil {
@@ -38,4 +63,13 @@ func WebArchiveDownloadHandler() http.HandlerFunc {
 		}
 		log.Println("Archive saved")
 	}
+}
+
+func readZipFile(zf *zip.File) ([]byte, error) {
+	f, err := zf.Open()
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return ioutil.ReadAll(f)
 }
