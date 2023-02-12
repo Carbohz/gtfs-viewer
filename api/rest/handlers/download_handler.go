@@ -4,6 +4,8 @@ import (
 	"archive/zip"
 	"bytes"
 	"fmt"
+	"github.com/Carbohz/gtfs-viewer/api/rest/models"
+	"github.com/gocarina/gocsv"
 	"io"
 	"io/ioutil"
 	"log"
@@ -43,9 +45,15 @@ func WebArchiveDownloadHandler() http.HandlerFunc {
 					log.Println(err)
 					continue
 				}
-
-				_ = unzippedFileBytes // this is unzipped file bytes
 				log.Println(string(unzippedFileBytes))
+
+				var routes []*models.Route
+				if err := gocsv.UnmarshalBytes(unzippedFileBytes, &routes); err != nil {
+					log.Printf("Failed to unmarshal routes.txt: %s", string(unzippedFileBytes))
+					http.Error(writer, err.Error(), http.StatusBadRequest)
+					return
+				}
+				log.Println(routes[0])
 			}
 		}
 
