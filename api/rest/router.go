@@ -1,7 +1,7 @@
-package downloader
+package rest
 
 import (
-	d "github.com/Carbohz/gtfs-viewer/api/rest/downloader/handlers"
+	d "github.com/Carbohz/gtfs-viewer/api/rest/handlers"
 	"github.com/go-chi/chi"
 )
 

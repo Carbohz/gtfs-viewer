@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"github.com/Carbohz/gtfs-viewer/api/rest/downloader"
+	"github.com/Carbohz/gtfs-viewer/api/rest"
 	_ "github.com/Carbohz/gtfs-viewer/service/server/v1"
 	"log"
 	"os/signal"
@@ -20,7 +20,7 @@ func main() {
 
 	// service := v1.NewService()
 
-	apiServer, err := downloader.NewAPIServer()
+	apiServer, err := rest.NewAPIServer()
 	if err != nil {
 		log.Fatalf("Failed to create a server: %v", err)
 	}
